@@ -2598,3 +2598,24 @@ async def test_one_deprecation_warning_per_platform(
         ):
             count += 1
     assert count == 1
+
+
+async def test_remove_unknown_conf_entry_options(hass, mqtt_client_mock):
+    """Test unknown keys in config entry data is removed."""
+    mqtt_config = {
+        mqtt.CONF_BROKER: "mock-broker",
+        mqtt.CONF_BIRTH_MESSAGE: {},
+        mqtt.CONF_PROTOCOL: mqtt.PROTOCOL_311,
+    }
+
+    entry = MockConfigEntry(
+        data=mqtt_config,
+        domain=mqtt.DOMAIN,
+        title="MQTT",
+    )
+
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert mqtt.CONF_PROTOCOL not in entry.data
