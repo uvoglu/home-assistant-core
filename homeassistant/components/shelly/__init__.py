@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
-import logging
 from threading import Timer
 from typing import Any, Final, cast
 
