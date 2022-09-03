@@ -3,7 +3,7 @@ from aiohomekit.model.characteristics import CharacteristicsTypes
 from aiohomekit.model.services import ServicesTypes
 from aiohomekit.protocol.statuscodes import HapStatusCode
 
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 
 from tests.components.homekit_controller.common import Helper, setup_test_component
 
@@ -79,6 +79,7 @@ async def test_temperature_sensor_read_state(hass, utcnow):
     assert state.state == "20"
 
     assert state.attributes["device_class"] == SensorDeviceClass.TEMPERATURE
+    assert state.attributes["state_class"] == SensorStateClass.MEASUREMENT
 
 
 async def test_temperature_sensor_not_added_twice(hass, utcnow):
@@ -87,10 +88,12 @@ async def test_temperature_sensor_not_added_twice(hass, utcnow):
         hass, create_temperature_sensor_service, suffix="temperature"
     )
 
+    created_sensors = set()
     for state in hass.states.async_all():
-        if state.entity_id.startswith("button"):
-            continue
-        assert state.entity_id == helper.entity_id
+        if state.attributes.get("device_class") == SensorDeviceClass.TEMPERATURE:
+            created_sensors.add(state.entity_id)
+
+    assert created_sensors == {helper.entity_id}
 
 
 async def test_humidity_sensor_read_state(hass, utcnow):
@@ -146,7 +149,7 @@ async def test_light_level_sensor_read_state(hass, utcnow):
 async def test_carbon_dioxide_level_sensor_read_state(hass, utcnow):
     """Test reading the state of a HomeKit carbon dioxide sensor accessory."""
     helper = await setup_test_component(
-        hass, create_carbon_dioxide_level_sensor_service, suffix="co2"
+        hass, create_carbon_dioxide_level_sensor_service, suffix="carbon_dioxide"
     )
 
     state = await helper.async_update(
