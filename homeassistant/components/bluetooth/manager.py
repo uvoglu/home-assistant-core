@@ -60,6 +60,7 @@ APPLE_DEVICE_ID_START_BYTE: Final = 0x10  # bluetooth_le_tracker
 APPLE_START_BYTES_WANTED: Final = {APPLE_DEVICE_ID_START_BYTE, APPLE_HOMEKIT_START_BYTE}
 
 RSSI_SWITCH_THRESHOLD = 6
+NO_RSSI_VALUE = -1000
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ def _prefer_previous_adv(
                 STALE_ADVERTISEMENT_SECONDS,
             )
         return False
-    if new.device.rssi - RSSI_SWITCH_THRESHOLD > old.device.rssi:
+    if new.device.rssi - RSSI_SWITCH_THRESHOLD > (old.device.rssi or NO_RSSI_VALUE):
         # If new advertisement is RSSI_SWITCH_THRESHOLD more, the new one is preferred
         if new.source != old.source:
             _LOGGER.debug(
@@ -384,11 +385,11 @@ class BluetoothManager:
             callback_matcher[CONNECTABLE] = matcher.get(CONNECTABLE, True)
 
         connectable = callback_matcher[CONNECTABLE]
-        self._callback_index.add_with_address(callback_matcher)
+        self._callback_index.add_callback_matcher(callback_matcher)
 
         @hass_callback
         def _async_remove_callback() -> None:
-            self._callback_index.remove_with_address(callback_matcher)
+            self._callback_index.remove_callback_matcher(callback_matcher)
 
         # If we have history for the subscriber, we can trigger the callback
         # immediately with the last packet so the subscriber can see the
