@@ -17,18 +17,16 @@ from aiohomekit.model.services import Service, ServicesTypes
 from aiohomekit.utils import clamp_enum_to_char
 
 from homeassistant.components.climate import (
-    DEFAULT_MAX_TEMP,
-    DEFAULT_MIN_TEMP,
-    ClimateEntity,
-)
-from homeassistant.components.climate.const import (
     ATTR_HVAC_MODE,
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
+    DEFAULT_MAX_TEMP,
+    DEFAULT_MIN_TEMP,
     FAN_AUTO,
     FAN_ON,
     SWING_OFF,
     SWING_VERTICAL,
+    ClimateEntity,
     ClimateEntityFeature,
     HVACAction,
     HVACMode,
@@ -567,6 +565,14 @@ class HomeKitClimateEntity(HomeKitBaseClimateEntity):
         # This characteristic describes the current mode of a device,
         # e.g. a thermostat is "heating" a room to 75 degrees Fahrenheit.
         # Can be 0 - 2 (Off, Heat, Cool)
+
+        # If the HVAC is switched off, it must be idle
+        # This works around a bug in some devices (like Eve radiator valves) that
+        # return they are heating when they are not.
+        target = self.service.value(CharacteristicsTypes.HEATING_COOLING_TARGET)
+        if target == HeatingCoolingTargetValues.OFF:
+            return HVACAction.IDLE
+
         value = self.service.value(CharacteristicsTypes.HEATING_COOLING_CURRENT)
         return CURRENT_MODE_HOMEKIT_TO_HASS.get(value)
 

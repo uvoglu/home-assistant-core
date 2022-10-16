@@ -10,16 +10,14 @@ import voluptuous as vol
 
 from homeassistant.components import siren
 from homeassistant.components.siren import (
-    TURN_ON_SCHEMA,
-    SirenEntity,
-    SirenEntityFeature,
-    process_turn_on_params,
-)
-from homeassistant.components.siren.const import (
     ATTR_AVAILABLE_TONES,
     ATTR_DURATION,
     ATTR_TONE,
     ATTR_VOLUME_LEVEL,
+    TURN_ON_SCHEMA,
+    SirenEntity,
+    SirenEntityFeature,
+    process_turn_on_params,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -56,6 +54,7 @@ from .mixins import (
     warn_for_legacy_schema,
 )
 from .models import MqttCommandTemplate, MqttValueTemplate
+from .util import get_mqtt_data
 
 DEFAULT_NAME = "MQTT Siren"
 DEFAULT_PAYLOAD_ON = "ON"
@@ -285,7 +284,7 @@ class MqttSiren(MqttEntity, SirenEntity):
                     )
                     return
             self._update(process_turn_on_params(self, json_payload))
-            self.async_write_ha_state()
+            get_mqtt_data(self.hass).state_write_requests.write_state_request(self)
 
         if self._config.get(CONF_STATE_TOPIC) is None:
             # Force into optimistic mode.
